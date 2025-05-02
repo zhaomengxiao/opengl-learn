@@ -1,0 +1,38 @@
+# Build directories
+build/
+out/
+debug/
+release/
+
+# IDE directories and files
+.vs/
+.vscode/
+*.swp
+*.user
+*.suo
+*.sdf
+*.opensdf
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+*.cmake
+!CMakePresets.json
+
+# Compiled files
+*.exe
+*.dll
+*.lib
+*.pdb
+*.ilk
+*.obj
+*.exp
+*.idb
+*.ipdb
+*.iobj
+*.tlog
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
