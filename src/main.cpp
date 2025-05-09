@@ -4,6 +4,31 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <signal.h>
+#include <assert.h>
+
+// OpenGL错误处理函数
+void GLClearError()
+{
+    while (glGetError() != GL_NO_ERROR)
+        ;
+}
+
+bool GLLogCall(const char *function, const char *file, int line)
+{
+    while (GLenum error = glGetError())
+    {
+        std::cerr << "[OpenGL Error] (" << error << "): " << function
+                  << " " << file << ":" << line << std::endl;
+        return false;
+    }
+    return true;
+}
+
+#define GLCall(x)   \
+    GLClearError(); \
+    x;              \
+    assert(GLLogCall(#x, __FILE__, __LINE__))
 
 struct ShaderProgramSource
 {
@@ -49,10 +74,10 @@ ShaderProgramSource ParseShader(const std::string &filepath)
 // 编译着色器
 unsigned int CompileShader(unsigned int type, const std::string &source)
 {
-    unsigned int id = glCreateShader(type);
+    GLCall(unsigned int id = glCreateShader(type));
     const char *src = source.c_str();
-    glShaderSource(id, 1, &src, nullptr);
-    glCompileShader(id);
+    GLCall(glShaderSource(id, 1, &src, nullptr));
+    GLCall(glCompileShader(id));
 
     // 检查编译错误
     int result;
@@ -75,13 +100,13 @@ unsigned int CompileShader(unsigned int type, const std::string &source)
 // 创建着色器程序
 unsigned int CreateShaderProgram(const std::string &vertexShader, const std::string &fragmentShader)
 {
-    unsigned int program = glCreateProgram();
+    GLCall(unsigned int program = glCreateProgram());
     unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
     unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
 
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program);
+    GLCall(glAttachShader(program, vs));
+    GLCall(glAttachShader(program, fs));
+    GLCall(glLinkProgram(program));
 
     // 检查链接错误
     int result;
@@ -167,32 +192,32 @@ int main()
     };
 
     GLuint VAO, VBO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    GLCall(glGenVertexArrays(1, &VAO));
+    GLCall(glGenBuffers(1, &VBO));
+    GLCall(glGenBuffers(1, &EBO));
 
-    glGenBuffers(1, &EBO);
+    GLCall(glBindVertexArray(VAO));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, VBO));
+    GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
 
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
+    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
 
     // 位置属性
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
+    GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0));
+    GLCall(glEnableVertexAttribArray(0));
     // 颜色属性
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    GLCall(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float))));
+    GLCall(glEnableVertexAttribArray(1));
 
     // 获取uniform位置
-    int colorLoc = glGetUniformLocation(shaderProgram, "u_Color");
+    int colorLoc;
+    GLCall(colorLoc = glGetUniformLocation(shaderProgram, "u_Color"));
 
     while (!glfwWindowShouldClose(window))
     {
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
+        GLCall(glClear(GL_COLOR_BUFFER_BIT));
 
         // 使用时间计算颜色
         float timeValue = glfwGetTime();
@@ -200,19 +225,19 @@ int main()
         float greenValue = (sin(timeValue + 2.094f) + 1.0f) / 2.0f; // 2.094 = 2*pi/3
         float blueValue = (sin(timeValue + 4.189f) + 1.0f) / 2.0f;  // 4.189 = 4*pi/3
 
-        glUseProgram(shaderProgram);
-        glUniform3f(colorLoc, redValue, greenValue, blueValue);
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_INT, 0);
+        GLCall(glUseProgram(shaderProgram));
+        GLCall(glUniform3f(colorLoc, redValue, greenValue, blueValue));
+        GLCall(glBindVertexArray(VAO));
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_INT, 0));
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
-    glDeleteProgram(shaderProgram);
+    GLCall(glDeleteVertexArrays(1, &VAO));
+    GLCall(glDeleteBuffers(1, &VBO));
+    GLCall(glDeleteBuffers(1, &EBO));
+    GLCall(glDeleteProgram(shaderProgram));
 
     glfwDestroyWindow(window);
     glfwTerminate();
