@@ -151,21 +151,33 @@ int main()
 
     unsigned int shaderProgram = CreateShaderProgram(source.VertexSource, source.FragmentSource);
 
-    // 定义三角形顶点数据（位置和颜色）
+    // 定义正方形顶点数据（位置和颜色）
     float vertices[] = {
         // 位置              // 颜色
         -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, // 左下
         0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,  // 右下
-        0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f    // 顶部
+        0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f,   // 右上
+        -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f   // 左上
     };
 
-    GLuint VAO, VBO;
+    // 定义索引数据
+    unsigned int indices[] = {
+        0, 1, 2, // 第一个三角形
+        2, 3, 0  // 第二个三角形
+    };
+
+    GLuint VAO, VBO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+
+    glGenBuffers(1, &EBO);
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // 位置属性
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
@@ -174,14 +186,24 @@ int main()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
+    // 获取uniform位置
+    int colorLoc = glGetUniformLocation(shaderProgram, "u_Color");
+
     while (!glfwWindowShouldClose(window))
     {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        // 使用时间计算颜色
+        float timeValue = glfwGetTime();
+        float redValue = (sin(timeValue) + 1.0f) / 2.0f;
+        float greenValue = (sin(timeValue + 2.094f) + 1.0f) / 2.0f; // 2.094 = 2*pi/3
+        float blueValue = (sin(timeValue + 4.189f) + 1.0f) / 2.0f;  // 4.189 = 4*pi/3
+
         glUseProgram(shaderProgram);
+        glUniform3f(colorLoc, redValue, greenValue, blueValue);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_INT, 0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -189,6 +211,7 @@ int main()
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
     glDeleteProgram(shaderProgram);
 
     glfwDestroyWindow(window);

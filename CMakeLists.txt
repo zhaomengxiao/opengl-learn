@@ -16,6 +16,13 @@ find_package(glm CONFIG REQUIRED)
 # 添加可执行文件
 add_executable(${PROJECT_NAME} src/main.cpp)
 
+# 在Windows上设置控制台子系统
+if(MSVC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        LINK_FLAGS "/SUBSYSTEM:CONSOLE"
+    )
+endif()
+
 # 复制shader文件到可执行文件目录
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
