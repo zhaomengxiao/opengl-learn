@@ -16,6 +16,13 @@ find_package(glm CONFIG REQUIRED)
 # 添加可执行文件
 add_executable(${PROJECT_NAME} src/main.cpp)
 
+# 复制shader文件到可执行文件目录
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/res
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/res
+)
+
 # 链接库
 target_link_libraries(${PROJECT_NAME} 
     PRIVATE 

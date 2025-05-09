@@ -1,30 +1,107 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 
-// 顶点着色器代码
-const char *vertexShaderSource = R"(
-    #version 330 core
-    layout (location = 0) in vec3 aPos;
-    layout (location = 1) in vec3 aColor;
-    out vec3 vertexColor;
-    void main() {
-        gl_Position = vec4(aPos, 1.0);
-        vertexColor = aColor;
+struct ShaderProgramSource
+{
+    std::string VertexSource;
+    std::string FragmentSource;
+};
+
+// 从文件解析着色器代码
+ShaderProgramSource ParseShader(const std::string &filepath)
+{
+    std::ifstream stream(filepath);
+
+    enum class ShaderType
+    {
+        NONE = -1,
+        VERTEX = 0,
+        FRAGMENT = 1
+    };
+
+    std::string line;
+    std::stringstream ss[2];
+    ShaderType type = ShaderType::NONE;
+
+    while (getline(stream, line))
+    {
+        if (line.find("#shader") != std::string::npos)
+        {
+            if (line.find("vertex") != std::string::npos)
+                type = ShaderType::VERTEX;
+            else if (line.find("fragment") != std::string::npos)
+                type = ShaderType::FRAGMENT;
+        }
+        else
+        {
+            if (type != ShaderType::NONE)
+                ss[(int)type] << line << '\n';
+        }
     }
-)";
 
-// 片段着色器代码
-const char *fragmentShaderSource = R"(
-    #version 330 core
-    in vec3 vertexColor;
-    out vec4 FragColor;
-    void main() {
-        FragColor = vec4(vertexColor, 1.0);
+    return {ss[0].str(), ss[1].str()};
+}
+
+// 编译着色器
+unsigned int CompileShader(unsigned int type, const std::string &source)
+{
+    unsigned int id = glCreateShader(type);
+    const char *src = source.c_str();
+    glShaderSource(id, 1, &src, nullptr);
+    glCompileShader(id);
+
+    // 检查编译错误
+    int result;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+    if (result == GL_FALSE)
+    {
+        int length;
+        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+        char *message = (char *)alloca(length * sizeof(char));
+        glGetShaderInfoLog(id, length, &length, message);
+        std::cerr << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader:" << std::endl;
+        std::cerr << message << std::endl;
+        glDeleteShader(id);
+        return 0;
     }
-)";
 
-// 错误回调函数
+    return id;
+}
+
+// 创建着色器程序
+unsigned int CreateShaderProgram(const std::string &vertexShader, const std::string &fragmentShader)
+{
+    unsigned int program = glCreateProgram();
+    unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
+    unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
+
+    glAttachShader(program, vs);
+    glAttachShader(program, fs);
+    glLinkProgram(program);
+
+    // 检查链接错误
+    int result;
+    glGetProgramiv(program, GL_LINK_STATUS, &result);
+    if (result == GL_FALSE)
+    {
+        int length;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+        char *message = (char *)alloca(length * sizeof(char));
+        glGetProgramInfoLog(program, length, &length, message);
+        std::cerr << "Failed to link shader program:" << std::endl;
+        std::cerr << message << std::endl;
+    }
+
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    return program;
+}
+
 void errorCallback(int error, const char *description)
 {
     std::cerr << "GLFW Error " << error << ": " << description << std::endl;
@@ -39,15 +116,12 @@ int main()
         return -1;
     }
 
-    // 设置错误回调
     glfwSetErrorCallback(errorCallback);
 
-    // 设置OpenGL版本和模式
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    // 创建窗口
     GLFWwindow *window = glfwCreateWindow(800, 600, "OpenGL Window", nullptr, nullptr);
     if (!window)
     {
@@ -56,10 +130,8 @@ int main()
         return -1;
     }
 
-    // 设置当前上下文
     glfwMakeContextCurrent(window);
 
-    // 初始化GLEW
     if (glewInit() != GLEW_OK)
     {
         std::cerr << "Failed to initialize GLEW" << std::endl;
@@ -68,57 +140,16 @@ int main()
         return -1;
     }
 
-    // 编译顶点着色器
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
-    glCompileShader(vertexShader);
+    // 读取并创建着色器
+    ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
 
-    // 检查顶点着色器编译错误
-    GLint success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
-        std::cerr << "Vertex shader compilation failed:\n"
-                  << infoLog << std::endl;
-        return -1;
-    }
+    // 调试输出
+    std::cout << "Vertex Shader Source:\n"
+              << source.VertexSource << std::endl;
+    std::cout << "Fragment Shader Source:\n"
+              << source.FragmentSource << std::endl;
 
-    // 编译片段着色器
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
-    glCompileShader(fragmentShader);
-
-    // 检查片段着色器编译错误
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
-        std::cerr << "Fragment shader compilation failed:\n"
-                  << infoLog << std::endl;
-        return -1;
-    }
-
-    // 创建和链接着色器程序
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    // 检查程序链接错误
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
-        std::cerr << "Shader program linking failed:\n"
-                  << infoLog << std::endl;
-        return -1;
-    }
-
-    // 删除着色器对象
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    unsigned int shaderProgram = CreateShaderProgram(source.VertexSource, source.FragmentSource);
 
     // 定义三角形顶点数据（位置和颜色）
     float vertices[] = {
@@ -128,7 +159,6 @@ int main()
         0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f    // 顶部
     };
 
-    // 创建并绑定顶点数组对象和顶点缓冲对象
     GLuint VAO, VBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -137,7 +167,6 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    // 设置顶点属性指针
     // 位置属性
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
@@ -145,24 +174,19 @@ int main()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // 渲染循环
     while (!glfwWindowShouldClose(window))
     {
-        // 清除颜色缓冲
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // 使用着色器程序
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        // 交换缓冲并检查事件
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // 清理资源
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteProgram(shaderProgram);
