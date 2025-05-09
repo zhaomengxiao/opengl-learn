@@ -228,7 +228,7 @@ int main()
         GLCall(glUseProgram(shaderProgram));
         GLCall(glUniform3f(colorLoc, redValue, greenValue, blueValue));
         GLCall(glBindVertexArray(VAO));
-        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_INT, 0));
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
         glfwSwapBuffers(window);
         glfwPollEvents();
