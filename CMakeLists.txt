@@ -14,7 +14,12 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
 # 添加可执行文件
-add_executable(${PROJECT_NAME} src/main.cpp)
+add_executable(${PROJECT_NAME} 
+    src/main.cpp
+    src/buffer/VertexBuffer.cpp
+    src/buffer/IndexBuffer.cpp
+    src/Renderer.cpp
+)
 
 # 在Windows上设置控制台子系统
 if(MSVC)
