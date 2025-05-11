@@ -1,5 +1,7 @@
-#pragma once
-#include "../Renderer.h"
+#ifndef INDEXBUFFER_H
+#define INDEXBUFFER_H
+
+#include "../GLErrorHandler.h"
 
 class IndexBuffer
 {
@@ -16,3 +18,5 @@ public:
 
     unsigned int GetCount() const { return m_Count; }
 };
+
+#endif // INDEXBUFFER_H

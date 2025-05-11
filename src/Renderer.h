@@ -1,19 +1,19 @@
-#pragma once
-#include <GL/glew.h>
-#include <iostream>
+#ifndef RENDERER_H
+#define RENDERER_H
 
-// OpenGL错误处理
-#define GLCall(x)   \
-    GLClearError(); \
-    x;              \
-    assert(GLLogCall(#x, __FILE__, __LINE__))
+#include "GLErrorHandler.h"
 
-void GLClearError();
-bool GLLogCall(const char *function, const char *file, int line);
+// 前向声明
+class VertexArray;
+class IndexBuffer;
+class Shader;
 
 class Renderer
 {
 public:
-    void Draw() const;
     void Clear() const;
+    void Draw(const VertexArray &va, const IndexBuffer &ib, const Shader &shader) const;
+    void SetClearColor(float r, float g, float b, float a) const;
 };
+
+#endif // RENDERER_H

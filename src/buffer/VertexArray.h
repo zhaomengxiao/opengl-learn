@@ -1,7 +1,11 @@
-#pragma once
-#include <GL/glew.h>
-#include "VertexBuffer.h"
+#ifndef VERTEXARRAY_H
+#define VERTEXARRAY_H
+
+#include "../GLErrorHandler.h"
 #include "VertexBufferLayout.h"
+
+// 前向声明
+class VertexBuffer;
 
 class VertexArray
 {
@@ -16,3 +20,5 @@ public:
     void Bind() const;
     void Unbind() const;
 };
+
+#endif // VERTEXARRAY_H

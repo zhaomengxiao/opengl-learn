@@ -3,7 +3,6 @@
 #include <iostream>
 #include <string>
 #include <signal.h>
-#include <assert.h>
 #include "buffer/VertexBuffer.h"
 #include "buffer/IndexBuffer.h"
 #include "buffer/VertexArray.h"
@@ -79,10 +78,12 @@ int main()
         // 创建并初始化索引缓冲区
         IndexBuffer ib(indices, 6); // 6个索引
 
+        Renderer renderer;
+
         while (!glfwWindowShouldClose(window))
         {
-            GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
-            GLCall(glClear(GL_COLOR_BUFFER_BIT));
+            renderer.SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            renderer.Clear();
 
             // 使用时间计算颜色
             float timeValue = glfwGetTime();
@@ -90,10 +91,8 @@ int main()
             float greenValue = (sin(timeValue + 2.094f) + 1.0f) / 2.0f; // 2.094 = 2*pi/3
             float blueValue = (sin(timeValue + 4.189f) + 1.0f) / 2.0f;  // 4.189 = 4*pi/3
 
-            shader.Bind();
             shader.SetUniform3f("u_Color", redValue, greenValue, blueValue);
-            va.Bind();
-            GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
+            renderer.Draw(va, ib, shader);
 
             glfwSwapBuffers(window);
             glfwPollEvents();

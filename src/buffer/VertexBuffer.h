@@ -1,5 +1,7 @@
-#pragma once
-#include "../Renderer.h"
+#ifndef VERTEXBUFFER_H
+#define VERTEXBUFFER_H
+
+#include "../GLErrorHandler.h"
 
 class VertexBuffer
 {
@@ -13,3 +15,5 @@ public:
     void Bind() const;
     void Unbind() const;
 };
+
+#endif // VERTEXBUFFER_H

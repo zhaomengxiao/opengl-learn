@@ -21,6 +21,7 @@ add_executable(${PROJECT_NAME}
     src/buffer/VertexArray.cpp
     src/shader/Shader.cpp
     src/Renderer.cpp
+    src/GLErrorHandler.cpp
 )
 
 # 在Windows上设置控制台子系统
