@@ -8,6 +8,8 @@
 #include <assert.h>
 #include "buffer/VertexBuffer.h"
 #include "buffer/IndexBuffer.h"
+#include "buffer/VertexArray.h"
+#include "buffer/VertexBufferLayout.h"
 #include "Renderer.h"
 
 struct ShaderProgramSource
@@ -171,24 +173,16 @@ int main()
             2, 3, 0  // 第二个三角形
         };
 
-        GLuint VAO;
-        GLCall(glGenVertexArrays(1, &VAO));
-        GLCall(glBindVertexArray(VAO));
-
-        // 创建并初始化顶点缓冲区
+        // 创建并配置顶点数组对象
+        VertexArray va;
         VertexBuffer vb(vertices, sizeof(vertices));
-        vb.Bind();
+        VertexBufferLayout layout;
+        layout.Push<float>(3); // 位置属性
+        layout.Push<float>(3); // 颜色属性
+        va.AddBuffer(vb, layout);
 
         // 创建并初始化索引缓冲区
         IndexBuffer ib(indices, 6); // 6个索引
-        ib.Bind();
-
-        // 位置属性
-        GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0));
-        GLCall(glEnableVertexAttribArray(0));
-        // 颜色属性
-        GLCall(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float))));
-        GLCall(glEnableVertexAttribArray(1));
 
         // 获取uniform位置
         int colorLoc;
@@ -207,14 +201,13 @@ int main()
 
             GLCall(glUseProgram(shaderProgram));
             GLCall(glUniform3f(colorLoc, redValue, greenValue, blueValue));
-            GLCall(glBindVertexArray(VAO));
+            va.Bind();
             GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
 
-        GLCall(glDeleteVertexArrays(1, &VAO));
         GLCall(glDeleteProgram(shaderProgram));
     }
     glfwDestroyWindow(window);

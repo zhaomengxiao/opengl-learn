@@ -18,6 +18,7 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/buffer/VertexBuffer.cpp
     src/buffer/IndexBuffer.cpp
+    src/buffer/VertexArray.cpp
     src/Renderer.cpp
 )
 
