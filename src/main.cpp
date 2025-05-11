@@ -1,8 +1,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <string>
 #include <signal.h>
 #include <assert.h>
@@ -10,104 +8,8 @@
 #include "buffer/IndexBuffer.h"
 #include "buffer/VertexArray.h"
 #include "buffer/VertexBufferLayout.h"
+#include "shader/Shader.h"
 #include "Renderer.h"
-
-struct ShaderProgramSource
-{
-    std::string VertexSource;
-    std::string FragmentSource;
-};
-
-// 从文件解析着色器代码
-ShaderProgramSource ParseShader(const std::string &filepath)
-{
-    std::ifstream stream(filepath);
-
-    enum class ShaderType
-    {
-        NONE = -1,
-        VERTEX = 0,
-        FRAGMENT = 1
-    };
-
-    std::string line;
-    std::stringstream ss[2];
-    ShaderType type = ShaderType::NONE;
-
-    while (getline(stream, line))
-    {
-        if (line.find("#shader") != std::string::npos)
-        {
-            if (line.find("vertex") != std::string::npos)
-                type = ShaderType::VERTEX;
-            else if (line.find("fragment") != std::string::npos)
-                type = ShaderType::FRAGMENT;
-        }
-        else
-        {
-            if (type != ShaderType::NONE)
-                ss[(int)type] << line << '\n';
-        }
-    }
-
-    return {ss[0].str(), ss[1].str()};
-}
-
-// 编译着色器
-unsigned int CompileShader(unsigned int type, const std::string &source)
-{
-    GLCall(unsigned int id = glCreateShader(type));
-    const char *src = source.c_str();
-    GLCall(glShaderSource(id, 1, &src, nullptr));
-    GLCall(glCompileShader(id));
-
-    // 检查编译错误
-    int result;
-    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
-    if (result == GL_FALSE)
-    {
-        int length;
-        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-        char *message = (char *)alloca(length * sizeof(char));
-        glGetShaderInfoLog(id, length, &length, message);
-        std::cerr << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader:" << std::endl;
-        std::cerr << message << std::endl;
-        glDeleteShader(id);
-        return 0;
-    }
-
-    return id;
-}
-
-// 创建着色器程序
-unsigned int CreateShaderProgram(const std::string &vertexShader, const std::string &fragmentShader)
-{
-    GLCall(unsigned int program = glCreateProgram());
-    unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
-    unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
-
-    GLCall(glAttachShader(program, vs));
-    GLCall(glAttachShader(program, fs));
-    GLCall(glLinkProgram(program));
-
-    // 检查链接错误
-    int result;
-    glGetProgramiv(program, GL_LINK_STATUS, &result);
-    if (result == GL_FALSE)
-    {
-        int length;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-        char *message = (char *)alloca(length * sizeof(char));
-        glGetProgramInfoLog(program, length, &length, message);
-        std::cerr << "Failed to link shader program:" << std::endl;
-        std::cerr << message << std::endl;
-    }
-
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-
-    return program;
-}
 
 void errorCallback(int error, const char *description)
 {
@@ -147,16 +49,9 @@ int main()
         return -1;
     }
 
-    // 读取并创建着色器
-    ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
-
-    // 调试输出
-    std::cout << "Vertex Shader Source:\n"
-              << source.VertexSource << std::endl;
-    std::cout << "Fragment Shader Source:\n"
-              << source.FragmentSource << std::endl;
-
-    unsigned int shaderProgram = CreateShaderProgram(source.VertexSource, source.FragmentSource);
+    // 创建着色器
+    Shader shader("res/shaders/Basic.shader");
+    shader.Bind();
     {
         // 定义正方形顶点数据（位置和颜色）
         float vertices[] = {
@@ -184,10 +79,6 @@ int main()
         // 创建并初始化索引缓冲区
         IndexBuffer ib(indices, 6); // 6个索引
 
-        // 获取uniform位置
-        int colorLoc;
-        GLCall(colorLoc = glGetUniformLocation(shaderProgram, "u_Color"));
-
         while (!glfwWindowShouldClose(window))
         {
             GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
@@ -199,16 +90,14 @@ int main()
             float greenValue = (sin(timeValue + 2.094f) + 1.0f) / 2.0f; // 2.094 = 2*pi/3
             float blueValue = (sin(timeValue + 4.189f) + 1.0f) / 2.0f;  // 4.189 = 4*pi/3
 
-            GLCall(glUseProgram(shaderProgram));
-            GLCall(glUniform3f(colorLoc, redValue, greenValue, blueValue));
+            shader.Bind();
+            shader.SetUniform3f("u_Color", redValue, greenValue, blueValue);
             va.Bind();
             GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
-
-        GLCall(glDeleteProgram(shaderProgram));
     }
     glfwDestroyWindow(window);
     glfwTerminate();
