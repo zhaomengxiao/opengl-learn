@@ -20,9 +20,13 @@ add_executable(${PROJECT_NAME}
     src/buffer/IndexBuffer.cpp
     src/buffer/VertexArray.cpp
     src/shader/Shader.cpp
-    src/Renderer.cpp
     src/GLErrorHandler.cpp
+    src/Renderer.cpp
+    src/texture/Texture.cpp
 )
+
+# 添加vendor目录到包含路径
+target_include_directories(${PROJECT_NAME} PRIVATE src/vendor)
 
 # 在Windows上设置控制台子系统
 if(MSVC)

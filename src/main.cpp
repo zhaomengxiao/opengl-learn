@@ -8,6 +8,7 @@
 #include "buffer/VertexArray.h"
 #include "buffer/VertexBufferLayout.h"
 #include "shader/Shader.h"
+#include "texture/Texture.h"
 #include "Renderer.h"
 
 void errorCallback(int error, const char *description)
@@ -47,18 +48,18 @@ int main()
         glfwTerminate();
         return -1;
     }
-
-    // 创建着色器
-    Shader shader("res/shaders/Basic.shader");
-    shader.Bind();
     {
-        // 定义正方形顶点数据（位置和颜色）
+        // 创建着色器
+        Shader shader("res/shaders/Basic.shader");
+        shader.Bind();
+
+        // 定义正方形顶点数据（位置和纹理坐标）
         float vertices[] = {
-            // 位置              // 颜色
-            -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, // 左下
-            0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,  // 右下
-            0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f,   // 右上
-            -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f   // 左上
+            // 位置             // 纹理坐标
+            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // 左下
+            0.5f, -0.5f, 0.0f, 1.0f, 0.0f,  // 右下
+            0.5f, 0.5f, 0.0f, 1.0f, 1.0f,   // 右上
+            -0.5f, 0.5f, 0.0f, 0.0f, 1.0f   // 左上
         };
 
         // 定义索引数据
@@ -72,11 +73,15 @@ int main()
         VertexBuffer vb(vertices, sizeof(vertices));
         VertexBufferLayout layout;
         layout.Push<float>(3); // 位置属性
-        layout.Push<float>(3); // 颜色属性
+        layout.Push<float>(2); // 纹理坐标
         va.AddBuffer(vb, layout);
 
         // 创建并初始化索引缓冲区
         IndexBuffer ib(indices, 6); // 6个索引
+
+        // 创建并绑定纹理
+        Texture texture("res/textures/assamble.png");
+        shader.SetUniform1i("u_Texture", 0);
 
         Renderer renderer;
 
@@ -85,13 +90,7 @@ int main()
             renderer.SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
             renderer.Clear();
 
-            // 使用时间计算颜色
-            float timeValue = glfwGetTime();
-            float redValue = (sin(timeValue) + 1.0f) / 2.0f;
-            float greenValue = (sin(timeValue + 2.094f) + 1.0f) / 2.0f; // 2.094 = 2*pi/3
-            float blueValue = (sin(timeValue + 4.189f) + 1.0f) / 2.0f;  // 4.189 = 4*pi/3
-
-            shader.SetUniform3f("u_Color", redValue, greenValue, blueValue);
+            texture.Bind();
             renderer.Draw(va, ib, shader);
 
             glfwSwapBuffers(window);
