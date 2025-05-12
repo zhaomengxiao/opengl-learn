@@ -48,6 +48,10 @@ int main()
         glfwTerminate();
         return -1;
     }
+
+    // 启用混合
+    GLCall(glEnable(GL_BLEND));
+    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
     {
         // 创建着色器
         Shader shader("res/shaders/Basic.shader");
@@ -80,7 +84,7 @@ int main()
         IndexBuffer ib(indices, 6); // 6个索引
 
         // 创建并绑定纹理
-        Texture texture("res/textures/assamble.png");
+        Texture texture("res/textures/butterfly.png");
         shader.SetUniform1i("u_Texture", 0);
 
         Renderer renderer;
