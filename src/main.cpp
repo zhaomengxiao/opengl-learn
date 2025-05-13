@@ -10,6 +10,8 @@
 #include "shader/Shader.h"
 #include "texture/Texture.h"
 #include "Renderer.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 void errorCallback(int error, const char *description)
 {
@@ -60,10 +62,10 @@ int main()
         // 定义正方形顶点数据（位置和纹理坐标）
         float vertices[] = {
             // 位置             // 纹理坐标
-            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // 左下
-            0.5f, -0.5f, 0.0f, 1.0f, 0.0f,  // 右下
-            0.5f, 0.5f, 0.0f, 1.0f, 1.0f,   // 右上
-            -0.5f, 0.5f, 0.0f, 0.0f, 1.0f   // 左上
+            400.0f, 300.0f, 0.0f, 0.0f, 0.0f, // 左下
+            600.0f, 300.0f, 0.0f, 1.0f, 0.0f, // 右下
+            600.0f, 500.0f, 0.0f, 1.0f, 1.0f, // 右上
+            400.0f, 500.0f, 0.0f, 0.0f, 1.0f  // 左上
         };
 
         // 定义索引数据
@@ -86,6 +88,14 @@ int main()
         // 创建并绑定纹理
         Texture texture("res/textures/butterfly.png");
         shader.SetUniform1i("u_Texture", 0);
+
+        // MVP矩阵设置
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+        glm::mat4 proj = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f);
+
+        glm::mat4 mvp = proj * view * model;
+        shader.SetUniformMat4f("u_MVP", mvp);
 
         Renderer renderer;
 
