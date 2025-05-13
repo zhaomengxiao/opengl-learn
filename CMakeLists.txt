@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(GLEW REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 # 添加可执行文件
 add_executable(${PROJECT_NAME} 
@@ -48,6 +49,7 @@ target_link_libraries(${PROJECT_NAME}
     GLEW::GLEW
     glfw
     glm::glm
+    imgui::imgui
 )
 
 # 添加OpenGL库

@@ -3,6 +3,9 @@
 #include <iostream>
 #include <string>
 #include <signal.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 #include "buffer/VertexBuffer.h"
 #include "buffer/IndexBuffer.h"
 #include "buffer/VertexArray.h"
@@ -43,6 +46,9 @@ int main()
 
     glfwMakeContextCurrent(window);
 
+    // 启用垂直同步
+    glfwSwapInterval(1);
+
     if (glewInit() != GLEW_OK)
     {
         std::cerr << "Failed to initialize GLEW" << std::endl;
@@ -55,6 +61,15 @@ int main()
     GLCall(glEnable(GL_BLEND));
     GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
     {
+        // 初始化ImGui
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO &io = ImGui::GetIO();
+        io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/msyh.ttc", 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
+        ImGui::StyleColorsDark();
+        ImGui_ImplGlfw_InitForOpenGL(window, true);
+        ImGui_ImplOpenGL3_Init("#version 330");
+
         // 创建着色器
         Shader shader("res/shaders/Basic.shader");
         shader.Bind();
@@ -91,26 +106,75 @@ int main()
 
         // MVP矩阵设置
         glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+        glm::vec3 cameraPos(0.0f, 0.0f, 0.0f);
         glm::mat4 proj = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f);
 
+        glm::mat4 view = glm::translate(glm::mat4(1.0f), cameraPos);
         glm::mat4 mvp = proj * view * model;
         shader.SetUniformMat4f("u_MVP", mvp);
 
         Renderer renderer;
+
+        // 帧率计算变量
+        double lastTime = glfwGetTime();
+        int frameCount = 0;
+        float fps = 0.0f;
+        bool vsync = true; // 垂直同步状态
 
         while (!glfwWindowShouldClose(window))
         {
             renderer.SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
             renderer.Clear();
 
+            // 开始ImGui帧
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+
+            // 计算帧率
+            double currentTime = glfwGetTime();
+            frameCount++;
+            if (currentTime - lastTime >= 1.0) // 每秒更新一次
+            {
+                fps = static_cast<float>(frameCount);
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+
+            // ImGui控件
+            ImGui::Begin("视图控制");
+            ImGui::Text("FPS: %.1f", fps);
+            if (ImGui::Checkbox("垂直同步", &vsync))
+            {
+                glfwSwapInterval(vsync ? 1 : 0);
+            }
+            ImGui::Separator();
+            ImGui::Text("相机位置控制");
+            if (ImGui::DragFloat2("Position", &cameraPos[0], 1.0f, -400.0f, 400.0f))
+            {
+                view = glm::translate(glm::mat4(1.0f), glm::vec3(cameraPos[0], cameraPos[1], 0.0f));
+                mvp = proj * view * model;
+                shader.SetUniformMat4f("u_MVP", mvp);
+            }
+            ImGui::End();
+
+            // 渲染场景
             texture.Bind();
             renderer.Draw(va, ib, shader);
+
+            // 渲染ImGui
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
     }
+    // 清理ImGui
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
