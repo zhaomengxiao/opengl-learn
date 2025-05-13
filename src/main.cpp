@@ -105,13 +105,19 @@ int main()
         shader.SetUniform1i("u_Texture", 0);
 
         // MVP矩阵设置
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-        glm::vec3 cameraPos(0.0f, 0.0f, 0.0f);
+        glm::vec2 cameraPos(0.0f, 0.0f); // 相机位置
+        glm::vec2 position1(0.0f, 0.0f); // 第一个物体的位置
+        glm::vec2 position2(0.0f, 0.0f); // 第二个物体的位置
         glm::mat4 proj = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f);
+        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(cameraPos.x, cameraPos.y, 0.0f));
+        glm::mat4 model1, model2, mvp1, mvp2;
 
-        glm::mat4 view = glm::translate(glm::mat4(1.0f), cameraPos);
-        glm::mat4 mvp = proj * view * model;
-        shader.SetUniformMat4f("u_MVP", mvp);
+        // 更新两个物体的MVP矩阵
+        model1 = glm::translate(glm::mat4(1.0f), glm::vec3(position1.x, position1.y, 0.0f));
+        model2 = glm::translate(glm::mat4(1.0f), glm::vec3(position2.x, position2.y, 0.0f));
+        mvp1 = proj * view * model1;
+        mvp2 = proj * view * model2;
+        // shader.SetUniformMat4f("u_MVP", mvp1);
 
         Renderer renderer;
 
@@ -149,17 +155,40 @@ int main()
                 glfwSwapInterval(vsync ? 1 : 0);
             }
             ImGui::Separator();
-            ImGui::Text("相机位置控制");
-            if (ImGui::DragFloat2("Position", &cameraPos[0], 1.0f, -400.0f, 400.0f))
+
+            // 相机控制
+            ImGui::Text("相机控制");
+            if (ImGui::DragFloat2("相机位置", &cameraPos.x, 1.0f, -400.0f, 400.0f))
             {
-                view = glm::translate(glm::mat4(1.0f), glm::vec3(cameraPos[0], cameraPos[1], 0.0f));
-                mvp = proj * view * model;
-                shader.SetUniformMat4f("u_MVP", mvp);
+                view = glm::translate(glm::mat4(1.0f), glm::vec3(cameraPos.x, cameraPos.y, 0.0f));
+                mvp1 = proj * view * model1;
+                mvp2 = proj * view * model2;
+            }
+
+            // 物体1控制
+            ImGui::Text("物体1控制");
+            if (ImGui::DragFloat2("位置##1", &position1.x, 1.0f, -400.0f, 400.0f))
+            {
+                model1 = glm::translate(glm::mat4(1.0f), glm::vec3(position1.x, position1.y, 0.0f));
+                mvp1 = proj * view * model1;
+            }
+
+            // 物体2控制
+            ImGui::Text("物体2控制");
+            if (ImGui::DragFloat2("位置##2", &position2.x, 1.0f, -400.0f, 400.0f))
+            {
+                model2 = glm::translate(glm::mat4(1.0f), glm::vec3(position2.x, position2.y, 0.0f));
+                mvp2 = proj * view * model2;
             }
             ImGui::End();
 
-            // 渲染场景
+            // 渲染物体1
             texture.Bind();
+            shader.SetUniformMat4f("u_MVP", mvp1);
+            renderer.Draw(va, ib, shader);
+
+            // 渲染物体2
+            shader.SetUniformMat4f("u_MVP", mvp2);
             renderer.Draw(va, ib, shader);
 
             // 渲染ImGui
