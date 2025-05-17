@@ -24,10 +24,13 @@ add_executable(${PROJECT_NAME}
     src/GLErrorHandler.cpp
     src/Renderer.cpp
     src/texture/Texture.cpp
+    src/test/Test.cpp
+    src/test/TestMenu.cpp
+    src/test/TestTextureSquare.cpp
 )
 
-# 添加vendor目录到包含路径
-target_include_directories(${PROJECT_NAME} PRIVATE src/vendor)
+# 添加包含路径
+target_include_directories(${PROJECT_NAME} PRIVATE src/vendor src/)
 
 # 在Windows上设置控制台子系统
 if(MSVC)

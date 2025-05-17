@@ -6,15 +6,10 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
-#include "buffer/VertexBuffer.h"
-#include "buffer/IndexBuffer.h"
-#include "buffer/VertexArray.h"
-#include "buffer/VertexBufferLayout.h"
-#include "shader/Shader.h"
-#include "texture/Texture.h"
-#include "Renderer.h"
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include "GLErrorHandler.h"
+#include "test/Test.h"
+#include "test/TestMenu.h"
+#include "test/TestTextureSquare.h"
 
 void errorCallback(int error, const char *description)
 {
@@ -60,6 +55,7 @@ int main()
     // 启用混合
     GLCall(glEnable(GL_BLEND));
     GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
     {
         // 初始化ImGui
         IMGUI_CHECKVERSION();
@@ -70,126 +66,61 @@ int main()
         ImGui_ImplGlfw_InitForOpenGL(window, true);
         ImGui_ImplOpenGL3_Init("#version 330");
 
-        // 创建着色器
-        Shader shader("res/shaders/Basic.shader");
-        shader.Bind();
+        test::TestMenu *testMenu = new test::TestMenu();
+        test::Test *currentTest = testMenu;
 
-        // 定义正方形顶点数据（位置和纹理坐标）
-        float vertices[] = {
-            // 位置             // 纹理坐标
-            400.0f, 300.0f, 0.0f, 0.0f, 0.0f, // 左下
-            600.0f, 300.0f, 0.0f, 1.0f, 0.0f, // 右下
-            600.0f, 500.0f, 0.0f, 1.0f, 1.0f, // 右上
-            400.0f, 500.0f, 0.0f, 0.0f, 1.0f  // 左上
-        };
-
-        // 定义索引数据
-        unsigned int indices[] = {
-            0, 1, 2, // 第一个三角形
-            2, 3, 0  // 第二个三角形
-        };
-
-        // 创建并配置顶点数组对象
-        VertexArray va;
-        VertexBuffer vb(vertices, sizeof(vertices));
-        VertexBufferLayout layout;
-        layout.Push<float>(3); // 位置属性
-        layout.Push<float>(2); // 纹理坐标
-        va.AddBuffer(vb, layout);
-
-        // 创建并初始化索引缓冲区
-        IndexBuffer ib(indices, 6); // 6个索引
-
-        // 创建并绑定纹理
-        Texture texture("res/textures/butterfly.png");
-        shader.SetUniform1i("u_Texture", 0);
-
-        // MVP矩阵设置
-        glm::vec2 cameraPos(0.0f, 0.0f); // 相机位置
-        glm::vec2 position1(0.0f, 0.0f); // 第一个物体的位置
-        glm::vec2 position2(0.0f, 0.0f); // 第二个物体的位置
-        glm::mat4 proj = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f);
-        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(cameraPos.x, cameraPos.y, 0.0f));
-        glm::mat4 model1, model2, mvp1, mvp2;
-
-        // 更新两个物体的MVP矩阵
-        model1 = glm::translate(glm::mat4(1.0f), glm::vec3(position1.x, position1.y, 0.0f));
-        model2 = glm::translate(glm::mat4(1.0f), glm::vec3(position2.x, position2.y, 0.0f));
-        mvp1 = proj * view * model1;
-        mvp2 = proj * view * model2;
-        // shader.SetUniformMat4f("u_MVP", mvp1);
-
-        Renderer renderer;
-
+        // 注册测试
+        testMenu->RegisterTest<test::TestTextureSquare>("两个纹理方块");
         // 帧率计算变量
         double lastTime = glfwGetTime();
         int frameCount = 0;
-        float fps = 0.0f;
-        bool vsync = true; // 垂直同步状态
 
+        // 主循环
         while (!glfwWindowShouldClose(window))
         {
-            renderer.SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-            renderer.Clear();
+            // 计算帧率
+            double currentTime = glfwGetTime();
+            frameCount++;
+            if (currentTime - lastTime >= 1.0) // 每秒更新一次帧率
+            {
+                float fps = float(frameCount) / float(currentTime - lastTime);
+                if (currentTest)
+                {
+                    currentTest->SetFramerate(fps);
+                }
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+
+            GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+            GLCall(glClear(GL_COLOR_BUFFER_BIT));
 
             // 开始ImGui帧
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-            // 计算帧率
-            double currentTime = glfwGetTime();
-            frameCount++;
-            if (currentTime - lastTime >= 1.0) // 每秒更新一次
+            if (currentTest)
             {
-                fps = static_cast<float>(frameCount);
-                frameCount = 0;
-                lastTime = currentTime;
+                // 如果当前是TestMenu且有选择的测试，使用选择的测试
+                test::TestMenu *menu = dynamic_cast<test::TestMenu *>(currentTest);
+                test::Test *activeTest = menu ? menu->GetCurrentTest() : currentTest;
+
+                if (activeTest)
+                {
+                    activeTest->OnUpdate(0.0f);
+                    activeTest->OnRender();
+                }
+
+                ImGui::Begin("测试");
+                if (currentTest != testMenu && ImGui::Button("<-"))
+                {
+                    delete currentTest;
+                    currentTest = testMenu;
+                }
+                currentTest->OnImGuiRender();
+                ImGui::End();
             }
-
-            // ImGui控件
-            ImGui::Begin("视图控制");
-            ImGui::Text("FPS: %.1f", fps);
-            if (ImGui::Checkbox("垂直同步", &vsync))
-            {
-                glfwSwapInterval(vsync ? 1 : 0);
-            }
-            ImGui::Separator();
-
-            // 相机控制
-            ImGui::Text("相机控制");
-            if (ImGui::DragFloat2("相机位置", &cameraPos.x, 1.0f, -400.0f, 400.0f))
-            {
-                view = glm::translate(glm::mat4(1.0f), glm::vec3(cameraPos.x, cameraPos.y, 0.0f));
-                mvp1 = proj * view * model1;
-                mvp2 = proj * view * model2;
-            }
-
-            // 物体1控制
-            ImGui::Text("物体1控制");
-            if (ImGui::DragFloat2("位置##1", &position1.x, 1.0f, -400.0f, 400.0f))
-            {
-                model1 = glm::translate(glm::mat4(1.0f), glm::vec3(position1.x, position1.y, 0.0f));
-                mvp1 = proj * view * model1;
-            }
-
-            // 物体2控制
-            ImGui::Text("物体2控制");
-            if (ImGui::DragFloat2("位置##2", &position2.x, 1.0f, -400.0f, 400.0f))
-            {
-                model2 = glm::translate(glm::mat4(1.0f), glm::vec3(position2.x, position2.y, 0.0f));
-                mvp2 = proj * view * model2;
-            }
-            ImGui::End();
-
-            // 渲染物体1
-            texture.Bind();
-            shader.SetUniformMat4f("u_MVP", mvp1);
-            renderer.Draw(va, ib, shader);
-
-            // 渲染物体2
-            shader.SetUniformMat4f("u_MVP", mvp2);
-            renderer.Draw(va, ib, shader);
 
             // 渲染ImGui
             ImGui::Render();
@@ -198,7 +129,12 @@ int main()
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
+
+        if (currentTest != testMenu)
+            delete currentTest;
+        delete testMenu;
     }
+
     // 清理ImGui
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
