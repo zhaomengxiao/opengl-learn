@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+﻿#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <string>
@@ -10,6 +10,8 @@
 #include "test/Test.h"
 #include "test/TestMenu.h"
 #include "test/TestTextureSquare.h"
+#include "test/TestCube.h"
+#pragma execution_character_set("utf-8")
 
 void errorCallback(int error, const char *description)
 {
@@ -71,6 +73,7 @@ int main()
 
         // 注册测试
         testMenu->RegisterTest<test::TestTextureSquare>("两个纹理方块");
+        testMenu->RegisterTest<test::TestCube>("立方体");
         // 帧率计算变量
         double lastTime = glfwGetTime();
         int frameCount = 0;
