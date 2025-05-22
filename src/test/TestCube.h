@@ -31,7 +31,10 @@ namespace test
         float m_CubeRotation;
         glm::vec3 m_CubePosition;
         float m_ClearColor[4];
-        bool m_Vsync{true};
         bool m_usePerspective{true};
+        float m_perspective_fov{45.0f};
+        float m_perspective_aspect{800.0f / 600.0f};
+        float m_perspective_near{0.1f};
+        float m_perspective_far{100.0f};
     };
 }

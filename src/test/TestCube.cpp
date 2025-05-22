@@ -72,7 +72,7 @@ namespace test
 
         if (m_usePerspective)
         {
-            m_Proj = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f); // 使用透视投影
+            m_Proj = glm::perspective(glm::radians(m_perspective_fov), m_perspective_aspect, m_perspective_near, m_perspective_far); // 使用透视投影
         }
         else
         {
@@ -102,11 +102,22 @@ namespace test
         ImGui::Text("camera");
         ImGui::DragFloat3("camera position", glm::value_ptr(m_CameraPos), 0.1f, -10.0f, 10.0f);
         ImGui::Checkbox("Perspective", &m_usePerspective);
+        if (m_usePerspective)
+        {
+            ImGui::DragFloat("fov", &m_perspective_fov, 1.0f, 1.0f, 179.0f);
+            ImGui::DragFloat("aspect", &m_perspective_aspect, 0.01f, 0.1f, 10.0f);
+            ImGui::DragFloat("near", &m_perspective_near, 0.01f, 0.01f, 100.0f);
+            ImGui::DragFloat("far", &m_perspective_far, 0.1f, 1.0f, 100.0f);
+        }
         ImGui::Separator();
 
         ImGui::Text("cube");
         ImGui::DragFloat3("position", glm::value_ptr(m_CubePosition), 0.1f, -5.0f, 5.0f);
         ImGui::DragFloat("rotation (Y-axis)", &m_CubeRotation, 1.0f, 0.0f, 360.0f);
+        ImGui::Separator();
+
+        ImGui::Text("clear color");
+        ImGui::ColorEdit4("clear color", m_ClearColor);
 
         ImGui::End();
     }
