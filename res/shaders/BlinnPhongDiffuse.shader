@@ -26,20 +26,28 @@ in vec3 FragPos;
 in vec3 Normal;
 
 uniform vec3 u_LightPos;
-uniform vec3 u_ViewPos; // 相机位置
 uniform vec3 u_ObjectColor;
 uniform vec3 u_LightColor;
+
+uniform float u_Constant;
+uniform float u_Linear;
+uniform float u_Quadratic;
 
 void main()
 {
     // 环境光 (简化，这里只关注漫反射)
     // vec3 ambient = 0.1 * u_LightColor;
 
+    // 光照衰减
+    float distance = length(u_LightPos - FragPos);
+    float attenuation = 1.0 / (u_Constant + u_Linear * distance + u_Quadratic * (distance * distance));
+    vec3 attenuatedLightColor = u_LightColor * attenuation;
+
     // 漫反射
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(u_LightPos - FragPos);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * u_LightColor * u_ObjectColor;
+    vec3 diffuse = diff * attenuatedLightColor * u_ObjectColor;
 
     FragColor = vec4(diffuse, 1.0); // 暂时只显示漫反射
 }

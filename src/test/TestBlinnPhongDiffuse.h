@@ -37,6 +37,10 @@ namespace test
         glm::vec3 m_ObjectColor;
         glm::vec3 m_LightColor;
 
+        float m_Constant;
+        float m_Linear;
+        float m_Quadratic;
+
         bool m_usePerspective{true};
         float m_perspective_fov{45.0f};
         float m_perspective_aspect{800.0f / 600.0f};

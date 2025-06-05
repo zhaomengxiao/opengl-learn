@@ -11,7 +11,8 @@ namespace test
 {
     TestBlinnPhongDiffuse::TestBlinnPhongDiffuse()
         : m_CameraPos(0.0f, 0.0f, 3.0f), m_CubePosition(0.0f, 0.0f, 0.0f), m_CubeRotation(0.0f),
-          m_LightPos(1.2f, 1.0f, 2.0f), m_ObjectColor(1.0f, 0.5f, 0.31f), m_LightColor(1.0f, 1.0f, 1.0f)
+          m_LightPos(1.2f, 1.0f, 2.0f), m_ObjectColor(1.0f, 0.5f, 0.31f), m_LightColor(1.0f, 1.0f, 1.0f),
+          m_Constant(1.0f), m_Linear(0.09f), m_Quadratic(0.032f) // Initialize attenuation factors
     {
         m_ClearColor[0] = 0.2f;
         m_ClearColor[1] = 0.3f;
@@ -131,9 +132,11 @@ namespace test
         m_Shader->SetUniformMat4f("u_NormalMatrix", glm::transpose(glm::inverse(m_Model))); // 计算法线矩阵
 
         m_Shader->SetUniform3f("u_LightPos", m_LightPos.x, m_LightPos.y, m_LightPos.z);
-        m_Shader->SetUniform3f("u_ViewPos", m_CameraPos.x, m_CameraPos.y, m_CameraPos.z);
         m_Shader->SetUniform3f("u_ObjectColor", m_ObjectColor.x, m_ObjectColor.y, m_ObjectColor.z);
         m_Shader->SetUniform3f("u_LightColor", m_LightColor.x, m_LightColor.y, m_LightColor.z);
+        m_Shader->SetUniform1f("u_Constant", m_Constant);
+        m_Shader->SetUniform1f("u_Linear", m_Linear);
+        m_Shader->SetUniform1f("u_Quadratic", m_Quadratic);
 
         renderer.Draw(*m_VAO, *m_IndexBuffer, *m_Shader);
     }
@@ -162,6 +165,9 @@ namespace test
         ImGui::Text("Light");
         ImGui::DragFloat3("Light Position", glm::value_ptr(m_LightPos), 0.1f, -10.0f, 10.0f);
         ImGui::ColorEdit3("Light Color", glm::value_ptr(m_LightColor));
+        ImGui::DragFloat("Constant", &m_Constant, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("Linear", &m_Linear, 0.001f, 0.0f, 1.0f);
+        ImGui::DragFloat("Quadratic", &m_Quadratic, 0.001f, 0.0f, 1.0f);
         ImGui::Separator();
 
         ImGui::Text("Object");
