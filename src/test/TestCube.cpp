@@ -97,7 +97,6 @@ namespace test
     void TestCube::OnImGuiRender()
     {
         Test::OnImGuiRender();
-        ImGui::Begin("test");
 
         ImGui::Text("camera");
         ImGui::DragFloat3("camera position", glm::value_ptr(m_CameraPos), 0.1f, -10.0f, 10.0f);
@@ -118,7 +117,5 @@ namespace test
 
         ImGui::Text("clear color");
         ImGui::ColorEdit4("clear color", m_ClearColor);
-
-        ImGui::End();
     }
 }

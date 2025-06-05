@@ -86,7 +86,6 @@ namespace test
     void TestTextureSquare::OnImGuiRender()
     {
         Test::OnImGuiRender();
-        ImGui::Begin("视图控制");
 
         if (ImGui::Checkbox("垂直同步", &m_Vsync))
         {
@@ -105,7 +104,5 @@ namespace test
         // 物体2控制
         ImGui::Text("物体2控制");
         ImGui::DragFloat2("位置##2", &m_Position2.x, 1.0f, -400.0f, 400.0f);
-
-        ImGui::End();
     }
 }

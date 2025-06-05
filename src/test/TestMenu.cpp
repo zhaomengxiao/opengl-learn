@@ -15,8 +15,6 @@ namespace test
 
     void TestMenu::OnImGuiRender()
     {
-        ImGui::Begin("Test Menu");
-
         if (m_CurrentTest)
         {
             if (ImGui::Button("<-"))
@@ -38,8 +36,6 @@ namespace test
                 }
             }
         }
-
-        ImGui::End();
     }
 
 }
