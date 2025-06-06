@@ -12,7 +12,8 @@ namespace test
     TestBlinnPhongDiffuse::TestBlinnPhongDiffuse()
         : m_CameraPos(0.0f, 0.0f, 3.0f), m_CubePosition(0.0f, 0.0f, 0.0f), m_CubeRotation(0.0f),
           m_LightPos(1.2f, 1.0f, 2.0f), m_ObjectColor(1.0f, 0.5f, 0.31f), m_LightColor(1.0f, 1.0f, 1.0f),
-          m_Constant(1.0f), m_Linear(0.09f), m_Quadratic(0.032f) // Initialize attenuation factors
+          m_Constant(1.0f), m_Linear(0.09f), m_Quadratic(0.032f), // Initialize attenuation factors
+          m_ObjectShininess(32.0f)
     {
         m_ClearColor[0] = 0.2f;
         m_ClearColor[1] = 0.3f;
@@ -138,6 +139,9 @@ namespace test
         m_Shader->SetUniform1f("u_Linear", m_Linear);
         m_Shader->SetUniform1f("u_Quadratic", m_Quadratic);
 
+        m_Shader->SetUniform3f("u_ViewPos", m_CameraPos.x, m_CameraPos.y, m_CameraPos.z);
+        m_Shader->SetUniform1f("u_Shininess", m_ObjectShininess);
+
         renderer.Draw(*m_VAO, *m_IndexBuffer, *m_Shader);
     }
 
@@ -172,6 +176,7 @@ namespace test
 
         ImGui::Text("Object");
         ImGui::ColorEdit3("Object Color", glm::value_ptr(m_ObjectColor));
+        ImGui::DragFloat("Object Shininess", &m_ObjectShininess, 10.0f, 1.0f, 256.0f);
         ImGui::Separator();
 
         ImGui::Text("Clear Color");

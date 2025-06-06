@@ -36,7 +36,9 @@ namespace test
         glm::vec3 m_LightPos;
         glm::vec3 m_ObjectColor;
         glm::vec3 m_LightColor;
+        float m_ObjectShininess;
 
+        // light attenuation
         float m_Constant;
         float m_Linear;
         float m_Quadratic;
