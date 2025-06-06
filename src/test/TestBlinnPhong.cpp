@@ -1,5 +1,5 @@
 #pragma execution_character_set("utf-8")
-#include "TestBlinnPhongDiffuse.h"
+#include "TestBlinnPhong.h"
 #include "../buffer/VertexBufferLayout.h"
 #include "../buffer/VertexBuffer.h"
 #include "../GLErrorHandler.h"
@@ -9,10 +9,11 @@
 
 namespace test
 {
-    TestBlinnPhongDiffuse::TestBlinnPhongDiffuse()
+    TestBlinnPhong::TestBlinnPhong()
         : m_CameraPos(0.0f, 0.0f, 3.0f), m_CubePosition(0.0f, 0.0f, 0.0f), m_CubeRotation(0.0f),
           m_LightPos(1.2f, 1.0f, 2.0f), m_ObjectColor(1.0f, 0.5f, 0.31f), m_LightColor(1.0f, 1.0f, 1.0f),
-          m_Constant(1.0f), m_Linear(0.09f), m_Quadratic(0.032f), // Initialize attenuation factors
+          m_AmbientColor(0.1f, 0.1f, 0.1f), m_SpecularColor(1.0f, 1.0f, 1.0f),
+          m_Constant(1.0f), m_Linear(0.09f), m_Quadratic(0.032f),
           m_ObjectShininess(32.0f)
     {
         m_ClearColor[0] = 0.2f;
@@ -87,16 +88,16 @@ namespace test
 
         // 对于非索引绘制，IndexBuffer可以简单地包含0到35的序列
         m_IndexBuffer = std::make_unique<IndexBuffer>(indices, 36);
-        m_Shader = std::make_unique<Shader>("res/shaders/BlinnPhongDiffuse.shader");
+        m_Shader = std::make_unique<Shader>("res/shaders/BlinnPhong.shader");
 
         m_Shader->Bind();
     }
 
-    TestBlinnPhongDiffuse::~TestBlinnPhongDiffuse()
+    TestBlinnPhong::~TestBlinnPhong()
     {
     }
 
-    void TestBlinnPhongDiffuse::OnUpdate(float deltaTime)
+    void TestBlinnPhong::OnUpdate(float deltaTime)
     {
         // 更新视图矩阵
         m_View = glm::lookAt(m_CameraPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -117,7 +118,7 @@ namespace test
         }
     }
 
-    void TestBlinnPhongDiffuse::OnRender()
+    void TestBlinnPhong::OnRender()
     {
         GLCall(glClearColor(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]));
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -142,10 +143,13 @@ namespace test
         m_Shader->SetUniform3f("u_ViewPos", m_CameraPos.x, m_CameraPos.y, m_CameraPos.z);
         m_Shader->SetUniform1f("u_Shininess", m_ObjectShininess);
 
+        m_Shader->SetUniform3f("u_AmbientColor", m_AmbientColor.x, m_AmbientColor.y, m_AmbientColor.z);
+        m_Shader->SetUniform3f("u_SpecularColor", m_SpecularColor.x, m_SpecularColor.y, m_SpecularColor.z);
+
         renderer.Draw(*m_VAO, *m_IndexBuffer, *m_Shader);
     }
 
-    void TestBlinnPhongDiffuse::OnImGuiRender()
+    void TestBlinnPhong::OnImGuiRender()
     {
         Test::OnImGuiRender();
 
@@ -164,6 +168,10 @@ namespace test
         ImGui::Text("Cube");
         ImGui::DragFloat3("Position", glm::value_ptr(m_CubePosition), 0.1f, -5.0f, 5.0f);
         ImGui::DragFloat("Rotation (Y-axis)", &m_CubeRotation, 1.0f, 0.0f, 360.0f);
+        ImGui::ColorEdit3("Object Color", glm::value_ptr(m_ObjectColor));
+        ImGui::DragFloat("Object Shininess", &m_ObjectShininess, 10.0f, 1.0f, 256.0f);
+        ImGui::ColorEdit3("Ambient Color", glm::value_ptr(m_AmbientColor));
+        ImGui::ColorEdit3("Specular Color", glm::value_ptr(m_SpecularColor));
         ImGui::Separator();
 
         ImGui::Text("Light");
@@ -172,11 +180,6 @@ namespace test
         ImGui::DragFloat("Constant", &m_Constant, 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat("Linear", &m_Linear, 0.001f, 0.0f, 1.0f);
         ImGui::DragFloat("Quadratic", &m_Quadratic, 0.001f, 0.0f, 1.0f);
-        ImGui::Separator();
-
-        ImGui::Text("Object");
-        ImGui::ColorEdit3("Object Color", glm::value_ptr(m_ObjectColor));
-        ImGui::DragFloat("Object Shininess", &m_ObjectShininess, 10.0f, 1.0f, 256.0f);
         ImGui::Separator();
 
         ImGui::Text("Clear Color");

@@ -11,7 +11,7 @@
 #include "test/TestMenu.h"
 #include "test/TestTextureSquare.h"
 #include "test/TestCube.h"
-#include "test/TestBlinnPhongDiffuse.h" // Include the new test
+#include "test/TestBlinnPhong.h"
 #pragma execution_character_set("utf-8")
 
 void errorCallback(int error, const char *description)
@@ -75,7 +75,7 @@ int main()
         // 注册测试
         testMenu->RegisterTest<test::TestTextureSquare>("两个纹理方块");
         testMenu->RegisterTest<test::TestCube>("立方体");
-        testMenu->RegisterTest<test::TestBlinnPhongDiffuse>("Blinn-Phong Diffuse"); // Register the new test
+        testMenu->RegisterTest<test::TestBlinnPhong>("Blinn-Phong Diffuse"); // Register the new test
         // 帧率计算变量
         double lastTime = glfwGetTime();
         int frameCount = 0;

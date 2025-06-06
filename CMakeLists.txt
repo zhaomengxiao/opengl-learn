@@ -28,7 +28,7 @@ add_executable(${PROJECT_NAME}
     src/test/TestMenu.cpp
     src/test/TestTextureSquare.cpp
     src/test/TestCube.cpp
-    src/test/TestBlinnPhongDiffuse.cpp # Add TestBlinnPhongDiffuse.cpp
+    src/test/TestBlinnPhong.cpp
 )
 
 # 添加包含路径

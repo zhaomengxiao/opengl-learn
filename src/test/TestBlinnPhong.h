@@ -11,11 +11,11 @@
 
 namespace test
 {
-    class TestBlinnPhongDiffuse : public Test
+    class TestBlinnPhong : public Test
     {
     public:
-        TestBlinnPhongDiffuse();
-        ~TestBlinnPhongDiffuse();
+        TestBlinnPhong();
+        ~TestBlinnPhong();
 
         void OnUpdate(float deltaTime) override;
         void OnRender() override;
@@ -36,6 +36,8 @@ namespace test
         glm::vec3 m_LightPos;
         glm::vec3 m_ObjectColor;
         glm::vec3 m_LightColor;
+        glm::vec3 m_AmbientColor;
+        glm::vec3 m_SpecularColor;
         float m_ObjectShininess;
 
         // light attenuation

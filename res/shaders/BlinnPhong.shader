@@ -32,6 +32,8 @@ in vec3 ViewDir;
 uniform vec3 u_LightPos;
 uniform vec3 u_ObjectColor;
 uniform vec3 u_LightColor;
+uniform vec3 u_AmbientColor;
+uniform vec3 u_SpecularColor;
 
 uniform float u_Constant;
 uniform float u_Linear;
@@ -41,8 +43,8 @@ uniform float u_Shininess;
 
 void main()
 {
-    // 环境光 (简化，这里只关注漫反射)
-    // vec3 ambient = 0.1 * u_LightColor;
+    // 环境光
+    vec3 ambient = u_AmbientColor * u_ObjectColor; // 环境光颜色 * 物体颜色
 
     // 光照衰减
     float distance = length(u_LightPos - FragPos);
@@ -58,7 +60,7 @@ void main()
     // 镜面反射
     vec3 halfwayDir = normalize(lightDir + ViewDir);
     float spec = max(pow(dot(norm,halfwayDir),u_Shininess),0.0);
-    vec3 specular = spec * attenuatedLightColor * u_ObjectColor;
+    vec3 specular = spec * attenuatedLightColor * u_SpecularColor;
 
-    FragColor = vec4(diffuse + specular, 1.0); // 暂时只显示漫反射+镜面反射
+    FragColor = vec4(ambient + diffuse + specular, 1.0);
 }
