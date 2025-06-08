@@ -29,10 +29,12 @@ add_executable(${PROJECT_NAME}
     src/test/TestTextureSquare.cpp
     src/test/TestCube.cpp
     src/test/TestBlinnPhong.cpp
+    src/test/TestSTL.cpp
+    src/mesh/STLReader.cpp
 )
 
 # 添加包含路径
-target_include_directories(${PROJECT_NAME} PRIVATE src/vendor src/)
+target_include_directories(${PROJECT_NAME} PRIVATE src/vendor src/ src/mesh)
 
 # 在Windows上设置控制台子系统
 if(MSVC)
